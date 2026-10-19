@@ -52,7 +52,7 @@ class RagJsonReporter {
         }));
 
         this.results.push({
-            testId: test.title.match(/RAG-\d+/)?.[0] || null,
+            testId: test.title.match(/\b(?:RAG|API|SEC)-\d+\b/i)?.[0] || `AUTO-${test.location.line}`,
             title: test.title,
             file: test.location.file,
             line: test.location.line,
@@ -81,6 +81,45 @@ class RagJsonReporter {
             item => item.status === 'interrupted'
         ).length;
 
+
+        const categories = ['RAG', 'API', 'SEC'];
+
+        const categorySummary = Object.fromEntries(
+            categories.map(category => {
+                const categoryTests = this.results.filter(item =>
+                    item.testId?.startsWith(`${category}-`)
+                );
+
+                const categoryPassed = categoryTests.filter(
+                    item => item.status === 'passed'
+                ).length;
+
+                const categoryFailed = categoryTests.filter(
+                    item => item.status === 'failed'
+                ).length;
+
+                const categorySkipped = categoryTests.filter(
+                    item => item.status === 'skipped'
+                ).length;
+
+                return [
+                    category,
+                    {
+                        total: categoryTests.length,
+                        passed: categoryPassed,
+                        failed: categoryFailed,
+                        skipped: categorySkipped,
+                        passRate: categoryTests.length
+                            ? Number(
+                                ((categoryPassed / categoryTests.length) * 100).toFixed(2)
+                            )
+                            : 0
+                    }
+                ];
+            })
+        );
+
+
         const report = {
             project: 'AI-RAG-TestBench',
             generatedAt: new Date().toISOString(),
@@ -98,6 +137,7 @@ class RagJsonReporter {
                     : 0,
                 playwrightRunStatus: result.status
             },
+            categorySummary,
             tests: this.results
         };
 

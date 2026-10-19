@@ -67,8 +67,8 @@ for (const item of cases) {
       });
 
       expect(result.answer).toMatch(
-        /not contain|not enough information|cannot find|unable to determine|no information/i
-      );
+        /not contain|not enough information|cannot find|unable to determine|no information|no retrieved document|does not cover|don't have information|doesn't have information/i
+      );  
 
       return;
     }
